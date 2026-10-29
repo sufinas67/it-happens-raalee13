@@ -1,0 +1,76 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\sufia nasreen\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\sufia nasreen\.gemini\antigravity\scratch\fleetwise
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.14.1
+collecting ... collected 22 items
+
+tests/test_extras.py::test_capacity_too_small_rejected PASSED            [  4%]
+tests/test_extras.py::test_overdue_service_rejected PASSED               [  9%]
+tests/test_extras.py::test_shift_limit_rejected PASSED                   [ 13%]
+tests/test_extras.py::test_wrong_otp_rejected PASSED                     [ 18%]
+tests/test_extras.py::test_breakdown_swap_success PASSED                 [ 22%]
+tests/test_extras.py::test_breakdown_swap_no_replacement_leaves_everything_unchanged PASSED [ 27%]
+tests/test_extras.py::test_suggest_returns_smallest_fitting_vehicle PASSED [ 31%]
+tests/test_extras.py::test_queue_ordering_by_priority PASSED             [ 36%]
+tests/test_extras.py::test_csv_export_works PASSED                       [ 40%]
+tests/test_extras.py::test_db_partial_unique_index_rejects_duplicate_active_insert PASSED [ 45%]
+tests/test_rules.py::test_t1_valid_assignment PASSED                     [ 50%]
+tests/test_rules.py::test_t2_vehicle_conflict PASSED                     [ 54%]
+tests/test_rules.py::test_t3_driver_conflict PASSED                      [ 59%]
+tests/test_rules.py::test_t4_both_occupied PASSED                        [ 63%]
+tests/test_rules.py::test_t5_unavailable_driver PASSED                   [ 68%]
+tests/test_rules.py::test_t6_maintenance_vehicle PASSED                  [ 72%]
+tests/test_rules.py::test_t7_unknown_ids_404 PASSED                      [ 77%]
+tests/test_rules.py::test_t8_delivered_releases_vehicle_and_driver PASSED [ 81%]
+tests/test_rules.py::test_t9_cancel_releases_resources PASSED            [ 86%]
+tests/test_rules.py::test_t10_pending_to_delivered_rejected PASSED       [ 90%]
+tests/test_rules.py::test_t11_duplicate_submit_idempotency PASSED        [ 95%]
+tests/test_rules.py::test_t12_concurrency PASSED                         [100%]
+
+============================= 22 passed in 8.97s ==============================
+
+
+================================================================================
+FLEETWISE - CONCURRENCY ISOLATION & DOUBLE-BOOKING DEFENCE TEST
+================================================================================
+[INIT] Server online at http://127.0.0.1:51730
+[INIT] Seeding 20 concurrent deliveries and 20 distinct drivers...
+[ATTACK] Launching 20 parallel requests contending for the SAME vehicle 'V-101'...
+
+==========================================================================================
+Req #  | Delivery       | Target Veh | Driver     | Status  | Time (ms) | Result Message
+------------------------------------------------------------------------------------------
+1      | RACE-DELIV-01  | V-101      | RACE-DR-01 | [201]   | 4176.63   | Delivery successfully assigned
+2      | RACE-DELIV-02  | V-101      | RACE-DR-02 | [409]   | 4233.75   | Vehicle V-101 is currently assigned
+3      | RACE-DELIV-03  | V-101      | RACE-DR-03 | [409]   | 4485.21   | Vehicle V-101 is currently assigned
+4      | RACE-DELIV-04  | V-101      | RACE-DR-04 | [409]   | 4467.52   | Vehicle V-101 is currently assigned
+5      | RACE-DELIV-05  | V-101      | RACE-DR-05 | [409]   | 4513.15   | Vehicle V-101 is currently assigned
+6      | RACE-DELIV-06  | V-101      | RACE-DR-06 | [409]   | 4491.66   | Vehicle V-101 is currently assigned
+7      | RACE-DELIV-07  | V-101      | RACE-DR-07 | [409]   | 4262.98   | Vehicle V-101 is currently assigned
+8      | RACE-DELIV-08  | V-101      | RACE-DR-08 | [409]   | 4190.61   | Vehicle V-101 is currently assigned
+9      | RACE-DELIV-09  | V-101      | RACE-DR-09 | [409]   | 4222.38   | Vehicle V-101 is currently assigned
+10     | RACE-DELIV-10  | V-101      | RACE-DR-10 | [409]   | 4172.4    | Vehicle V-101 is currently assigned
+11     | RACE-DELIV-11  | V-101      | RACE-DR-11 | [409]   | 4189.02   | Vehicle V-101 is currently assigned
+12     | RACE-DELIV-12  | V-101      | RACE-DR-12 | [409]   | 4247.95   | Vehicle V-101 is currently assigned
+13     | RACE-DELIV-13  | V-101      | RACE-DR-13 | [409]   | 4224.75   | Vehicle V-101 is currently assigned
+14     | RACE-DELIV-14  | V-101      | RACE-DR-14 | [409]   | 4238.16   | Vehicle V-101 is currently assigned
+15     | RACE-DELIV-15  | V-101      | RACE-DR-15 | [409]   | 4442.58   | Vehicle V-101 is currently assigned
+16     | RACE-DELIV-16  | V-101      | RACE-DR-16 | [409]   | 4486.48   | Vehicle V-101 is currently assigned
+17     | RACE-DELIV-17  | V-101      | RACE-DR-17 | [409]   | 4451.22   | Vehicle V-101 is currently assigned
+18     | RACE-DELIV-18  | V-101      | RACE-DR-18 | [409]   | 4499.66   | Vehicle V-101 is currently assigned
+19     | RACE-DELIV-19  | V-101      | RACE-DR-19 | [409]   | 4152.38   | Vehicle V-101 is currently assigned
+20     | RACE-DELIV-20  | V-101      | RACE-DR-20 | [409]   | 4223.17   | Vehicle V-101 is currently assigned
+==========================================================================================
+
+[SUMMARY] Total Requests: 20
+[SUMMARY] Succeeded (201 Created): 1 (EXACTLY 1 REQUIRED)
+[SUMMARY] Conflicts (409 Rejected): 19 (EXACTLY 19 REQUIRED)
+[SUMMARY] Other/Errors:            0
+[VERIFY] Active assignments for vehicle V-101 in DB: 1
+[VERIFY] Total active assignments created: 1
+
+>>> CONCURRENCY TEST PASSED: ZERO DOUBLE-BOOKING OCCURRED <<<
+

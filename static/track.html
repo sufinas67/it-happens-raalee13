@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FleetWise - Live Delivery Tracking</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --stepper-inactive: #475569;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --stepper-inactive: #cbd5e1;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; }
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; max-width: 650px; width: 100%; padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; margin-bottom: 1.5rem; }
+    .logo { font-size: 1.35rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+    .badge { padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge-pending { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .badge-assigned { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+    .badge-in_transit { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+    .badge-delivered { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-cancelled { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    
+    .stepper { display: flex; justify-content: space-between; position: relative; margin: 2.5rem 0 2rem; }
+    .stepper::before { content: ""; position: absolute; top: 18px; left: 20px; right: 20px; height: 3px; background: var(--stepper-inactive); z-index: 1; }
+    .step-progress-bar { position: absolute; top: 18px; left: 20px; height: 3px; background: var(--primary); z-index: 2; transition: width 0.4s ease; width: 0%; }
+    .step { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .step-circle { width: 38px; height: 38px; border-radius: 50%; background: var(--card-bg); border: 3px solid var(--stepper-inactive); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; color: var(--text-muted); transition: all 0.3s; }
+    .step.active .step-circle { border-color: var(--primary); color: var(--primary); box-shadow: 0 0 10px rgba(59,130,246,0.4); }
+    .step.completed .step-circle { border-color: var(--success); background: var(--success); color: white; }
+    .step.cancelled .step-circle { border-color: var(--danger); background: var(--danger); color: white; }
+    .step-label { margin-top: 0.5rem; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); }
+    .step.active .step-label { color: var(--text); font-weight: 600; }
+    
+    .details { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-top: 1.5rem; }
+    .detail-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: var(--text-muted); font-size: 0.9rem; }
+    .detail-val { font-weight: 600; font-size: 0.95rem; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.8rem; }
+    .refresh-btn { margin-top: 1rem; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text); cursor: pointer; font-size: 0.85rem; }
+    .refresh-btn:hover { background: rgba(255,255,255,0.05); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="logo">
+        <span>🚚</span> FleetWise Public Tracking
+      </div>
+      <span id="status-badge" class="badge badge-pending">Loading...</span>
+    </div>
+
+    <div id="content">
+      <div class="stepper">
+        <div id="progress-bar" class="step-progress-bar"></div>
+        <div class="step" id="step-created">
+          <div class="step-circle">1</div>
+          <div class="step-label">Booked</div>
+        </div>
+        <div class="step" id="step-assigned">
+          <div class="step-circle">2</div>
+          <div class="step-label">Assigned</div>
+        </div>
+        <div class="step" id="step-transit">
+          <div class="step-circle">3</div>
+          <div class="step-label">In Transit</div>
+        </div>
+        <div class="step" id="step-delivered">
+          <div class="step-circle">4</div>
+          <div class="step-label">Delivered</div>
+        </div>
+      </div>
+
+      <div class="details">
+        <div class="detail-row">
+          <span class="detail-label">Tracking Number</span>
+          <span class="detail-val" id="val-id">--</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Pickup Location</span>
+          <span class="detail-val" id="val-pickup">--</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Destination</span>
+          <span class="detail-val" id="val-dropoff">--</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Scheduled Time</span>
+          <span class="detail-val" id="val-time">--</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Assigned Vehicle Type</span>
+          <span class="detail-val" id="val-vehicle">Not yet assigned</span>
+        </div>
+      </div>
+
+      <div style="text-align: center;">
+        <button class="refresh-btn" onclick="fetchTracking()">↻ Refresh Status</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    FleetWise Dispatch & Tracking Platform &bull; Real-time status updates every 5 seconds
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const deliveryId = urlParams.get('id');
+
+    async function fetchTracking() {
+      if (!deliveryId) {
+        document.getElementById('content').innerHTML = '<p style="text-align:center; color:var(--danger); padding:2rem;">No delivery ID provided in URL (?id=...)</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/track/${encodeURIComponent(deliveryId)}`);
+        if (!res.ok) {
+          const err = await res.json();
+          document.getElementById('status-badge').textContent = 'Not Found';
+          document.getElementById('status-badge').className = 'badge badge-cancelled';
+          document.getElementById('content').innerHTML = `<p style="text-align:center; color:var(--danger); padding:2rem;">${err.message || 'Delivery not found'}</p>`;
+          return;
+        }
+
+        const data = await res.json();
+        renderTracking(data);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderTracking(d) {
+      document.getElementById('val-id').textContent = d.delivery_id;
+      document.getElementById('val-pickup').textContent = d.pickup;
+      document.getElementById('val-dropoff').textContent = d.dropoff;
+      document.getElementById('val-time').textContent = d.scheduled_time;
+      document.getElementById('val-vehicle').textContent = d.assigned_vehicle_type ? `${d.assigned_vehicle_type}` : 'Pending assignment';
+
+      const badge = document.getElementById('status-badge');
+      badge.textContent = d.status.replace('_', ' ');
+      badge.className = `badge badge-${d.status}`;
+
+      const sCreated = document.getElementById('step-created');
+      const sAssigned = document.getElementById('step-assigned');
+      const sTransit = document.getElementById('step-transit');
+      const sDelivered = document.getElementById('step-delivered');
+      const bar = document.getElementById('progress-bar');
+
+      // Reset
+      [sCreated, sAssigned, sTransit, sDelivered].forEach(s => s.className = 'step');
+
+      sCreated.classList.add('completed');
+      sCreated.querySelector('.step-circle').textContent = '✓';
+
+      if (d.status === 'pending') {
+        sCreated.classList.add('active');
+        bar.style.width = '0%';
+      } else if (d.status === 'assigned') {
+        sAssigned.classList.add('active');
+        bar.style.width = '33%';
+      } else if (d.status === 'in_transit') {
+        sAssigned.classList.add('completed');
+        sAssigned.querySelector('.step-circle').textContent = '✓';
+        sTransit.classList.add('active');
+        bar.style.width = '66%';
+      } else if (d.status === 'delivered') {
+        sAssigned.classList.add('completed');
+        sAssigned.querySelector('.step-circle').textContent = '✓';
+        sTransit.classList.add('completed');
+        sTransit.querySelector('.step-circle').textContent = '✓';
+        sDelivered.classList.add('completed');
+        sDelivered.querySelector('.step-circle').textContent = '✓';
+        bar.style.width = '100%';
+      } else if (d.status === 'cancelled') {
+        sDelivered.classList.add('cancelled');
+        sDelivered.querySelector('.step-circle').textContent = '✕';
+        sDelivered.querySelector('.step-label').textContent = 'Cancelled';
+        bar.style.background = 'var(--danger)';
+      }
+    }
+
+    fetchTracking();
+    setInterval(fetchTracking, 5000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Environment & testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.log

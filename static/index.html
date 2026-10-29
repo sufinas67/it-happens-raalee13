@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FleetWise - Vehicle & Delivery Assignment System</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+      --accent: #06b6d4;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f1f5f9;
+        --card-bg: #ffffff;
+        --card-border: #cbd5e1;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --primary: #2563eb;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 1.5rem; }
+    
+    header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--card-border); }
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand h1 { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hack-tag { background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.3); }
+
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    button { cursor: pointer; border-radius: 6px; font-size: 0.85rem; font-weight: 600; padding: 0.5rem 0.85rem; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
+    .btn-outline:hover { background: rgba(255,255,255,0.06); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { opacity: 0.9; }
+    .btn-warning { background: var(--warning); color: #000; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-purple { background: var(--purple); color: white; }
+    .btn-chaos { background: linear-gradient(135deg, #f43f5e, #e11d48); color: white; box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); }
+
+    /* Top Stats Bar */
+    .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; }
+    .stat-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+    .stat-val { font-size: 1.75rem; font-weight: 800; margin-top: 0.25rem; }
+    .gauge-container { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem; }
+    .progress-bar-bg { flex: 1; height: 8px; background: rgba(255,255,255,0.1); border-radius: 999px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 999px; transition: width 0.4s ease; width: 0%; }
+
+    /* Next in Queue Banner */
+    #next-banner { display: none; background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15)); border: 1px solid var(--primary); border-radius: 8px; padding: 0.85rem 1.25rem; margin-bottom: 1.5rem; justify-content: space-between; align-items: center; }
+    #next-banner.active { display: flex; }
+
+    /* Main Layout */
+    .main-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+    @media (min-width: 1024px) {
+      .main-grid { grid-template-columns: 340px 1fr; }
+    }
+
+    /* Assignment Panel */
+    .panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 1.25rem; }
+    .panel-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; }
+    select, input { width: 100%; padding: 0.5rem 0.75rem; border-radius: 6px; background: rgba(0,0,0,0.2); border: 1px solid var(--card-border); color: var(--text); font-size: 0.85rem; outline: none; }
+    select option:disabled { color: #64748b; background: #1e293b; font-style: italic; }
+    .why-box { background: rgba(59, 130, 246, 0.1); border: 1px dashed var(--primary); border-radius: 6px; padding: 0.75rem; font-size: 0.8rem; color: #93c5fd; margin-top: 0.5rem; display: none; }
+
+    /* Tabs & Content */
+    .tabs-nav { display: flex; gap: 0.5rem; border-bottom: 1px solid var(--card-border); margin-bottom: 1rem; }
+    .tab-btn { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); padding: 0.6rem 1rem; font-size: 0.9rem; font-weight: 600; border-radius: 0; }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Search & Filter Bar */
+    .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-bar input { flex: 1; min-width: 200px; }
+    .filter-bar select { width: 150px; }
+
+    /* Tables */
+    .table-container { overflow-x: auto; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    th { background: rgba(255,255,255,0.03); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; border-bottom: 1px solid var(--card-border); }
+    td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--card-border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* Badges */
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+    .badge-available { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-assigned { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+    .badge-maintenance { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .badge-inactive { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+    .badge-unavailable { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .badge-pending { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .badge-in_transit { background: rgba(168, 85, 247, 0.2); color: var(--purple); }
+    .badge-delivered { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-cancelled { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    
+    .badge-p-high { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-p-normal { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-p-low { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+    /* Action icons and buttons */
+    .action-btn { padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 4px; }
+    .action-group { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+
+    /* Modals */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 520px; padding: 1.5rem; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.75rem; }
+    .modal-title { font-size: 1.15rem; font-weight: 700; }
+    .close-btn { background: transparent; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 1.5rem; margin-top: 1rem; }
+    .timeline::before { content: ""; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: var(--card-border); }
+    .timeline-item { position: relative; margin-bottom: 1.25rem; }
+    .timeline-dot { position: absolute; left: -1.5rem; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--primary); border: 2px solid var(--card-bg); }
+    .timeline-time { font-size: 0.75rem; color: var(--text-muted); }
+    .timeline-event { font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .timeline-detail { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+    /* Chaos Output Box */
+    #chaos-modal .modal { max-width: 750px; }
+    .chaos-summary { display: flex; gap: 1.5rem; margin-bottom: 1rem; background: rgba(255,255,255,0.03); padding: 0.85rem; border-radius: 6px; font-weight: 600; }
+
+    /* Toast Notification */
+    #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; z-index: 200; }
+    .toast { background: var(--card-bg); border-left: 4px solid var(--primary); border-radius: 4px; padding: 0.75rem 1rem; min-width: 280px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); font-size: 0.85rem; animation: slideIn 0.3s ease; }
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--danger); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <span style="font-size: 1.75rem;">⚡</span>
+      <div>
+        <h1>FleetWise</h1>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">Vehicle & Delivery Assignment Dispatcher &bull; <span class="hack-tag">IT HAPPENS @ RAALE #13</span></div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-chaos" onclick="triggerChaos()"><span style="font-size:1.1rem">💥</span> Chaos Test (20 Parallel)</button>
+      <button class="btn-outline" onclick="openAddModal('vehicle')">+ Vehicle</button>
+      <button class="btn-outline" onclick="openAddModal('driver')">+ Driver</button>
+      <button class="btn-outline" onclick="openAddModal('delivery')">+ Delivery</button>
+      <button class="btn-outline" onclick="exportData('deliveries')">📥 Deliveries CSV</button>
+      <button class="btn-outline" onclick="exportData('audit')">📥 Audit CSV</button>
+      <button class="btn-danger" onclick="resetDemoData()">↺ Reset Demo</button>
+    </div>
+  </header>
+
+  <!-- Top Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-title">Available Vehicles</div>
+      <div class="stat-val" id="stat-avail-v">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Available Drivers</div>
+      <div class="stat-val" id="stat-avail-dr">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Active Deliveries</div>
+      <div class="stat-val" id="stat-active-del">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Completed (Delivered)</div>
+      <div class="stat-val" id="stat-deliv-cnt" style="color: var(--success);">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Pending In Queue</div>
+      <div class="stat-val" id="stat-pend-cnt" style="color: var(--warning);">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Fleet Utilisation</div>
+      <div class="stat-val" id="stat-util-pct">0%</div>
+      <div class="gauge-container">
+        <div class="progress-bar-bg">
+          <div id="util-fill" class="progress-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next In Queue Suggestion Banner (Revealed after release) -->
+  <div id="next-banner">
+    <div>
+      <strong>🚀 Recommended Next Action:</strong>
+      <span id="next-banner-text" style="margin-left: 0.5rem; font-size: 0.9rem;"></span>
+    </div>
+    <div style="display:flex; gap:0.5rem;">
+      <button id="next-accept-btn" class="btn-primary" onclick="acceptNextSuggestion()">Accept & Assign</button>
+      <button class="btn-outline" onclick="dismissNextBanner()">Dismiss</button>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+    
+    <!-- Left Column: Assignment Panel ("Why not?" view) -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>🎯 Smart Assignment</span>
+        <button class="btn-outline" style="font-size:0.75rem; padding:0.25rem 0.5rem;" onclick="suggestMatch()">✨ Suggest Best</button>
+      </div>
+
+      <div class="form-group">
+        <label>1. Select Pending Delivery</label>
+        <select id="assign-deliv-select" onchange="loadEligibility()">
+          <option value="">-- Choose Delivery --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>2. Choose Vehicle <span style="font-weight:normal; font-size:0.75rem;">(Why not? breakdown below)</span></label>
+        <select id="assign-veh-select">
+          <option value="">-- Select Delivery First --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>3. Choose Driver <span style="font-weight:normal; font-size:0.75rem;">(Shift & status validation)</span></label>
+        <select id="assign-dr-select">
+          <option value="">-- Select Delivery First --</option>
+        </select>
+      </div>
+
+      <div id="why-box" class="why-box"></div>
+
+      <div style="margin-top: 1.25rem;">
+        <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="executeAssignment()">Confirm Assignment</button>
+      </div>
+    </div>
+
+    <!-- Right Column: Tabs (Deliveries, Queue, Vehicles, Drivers) -->
+    <div>
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('deliveries')">Deliveries (<span id="count-deliv">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab('queue')">Priority Queue (<span id="count-queue">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab('vehicles')">Vehicles (<span id="count-veh">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab('drivers')">Drivers (<span id="count-dr">0</span>)</button>
+      </div>
+
+      <!-- Tab: Deliveries -->
+      <div id="tab-deliveries" class="tab-pane active">
+        <div class="filter-bar">
+          <input type="text" id="deliv-search" placeholder="Search customer, ID, pickup or dropoff..." oninput="fetchDeliveries()">
+          <select id="deliv-status-filter" onchange="fetchDeliveries()">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="assigned">Assigned</option>
+            <option value="in_transit">In Transit</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Route</th>
+                <th>Priority / Load</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th>OTP</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="deliveries-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab: Queue -->
+      <div id="tab-queue" class="tab-pane">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Priority</th>
+                <th>Delivery ID</th>
+                <th>Scheduled</th>
+                <th>Customer & Route</th>
+                <th>Load</th>
+                <th>Suggested Vehicle</th>
+                <th>Suggested Driver</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="queue-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab: Vehicles -->
+      <div id="tab-vehicles" class="tab-pane">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Reg No</th>
+                <th>Type</th>
+                <th>Capacity</th>
+                <th>Status</th>
+                <th>Service Due</th>
+                <th>Active Delivery</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="vehicles-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab: Drivers -->
+      <div id="tab-drivers" class="tab-pane">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Shift Deliveries</th>
+                <th>Active Delivery</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="drivers-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Audit Modal -->
+  <div id="audit-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Audit Timeline: <span id="audit-delivery-id"></span></div>
+        <button class="close-btn" onclick="closeModal('audit-modal')">&times;</button>
+      </div>
+      <div id="audit-timeline" class="timeline"></div>
+    </div>
+  </div>
+
+  <!-- Delivery Complete (OTP Input) Modal -->
+  <div id="otp-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Confirm Delivery (OTP Required)</div>
+        <button class="close-btn" onclick="closeModal('otp-modal')">&times;</button>
+      </div>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+        Enter the 4-digit recipient verification OTP to complete delivery.
+      </p>
+      <div class="form-group">
+        <label>4-Digit OTP</label>
+        <input type="text" id="otp-input" placeholder="e.g. 5832" maxlength="4">
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <button class="btn-outline" style="font-size:0.75rem;" onclick="prefillOtp()">Pre-fill Demo OTP</button>
+        <button class="btn-success" onclick="submitDeliveryWithOtp()">Confirm Delivered</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Vehicle/Driver/Delivery Modals -->
+  <div id="add-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="add-modal-title">Add Entity</div>
+        <button class="close-btn" onclick="closeModal('add-modal')">&times;</button>
+      </div>
+      <div id="add-modal-form"></div>
+    </div>
+  </div>
+
+  <!-- Chaos Test Results Modal -->
+  <div id="chaos-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🔥 Chaos Concurrency Test Results</div>
+        <button class="close-btn" onclick="closeModal('chaos-modal')">&times;</button>
+      </div>
+      <div class="chaos-summary">
+        <div>Target Vehicle: <span style="color:var(--primary)">V-101</span></div>
+        <div>Success: <span id="chaos-success-count" style="color:var(--success)">0</span></div>
+        <div>Rejected (409): <span id="chaos-reject-count" style="color:var(--danger)">0</span></div>
+      </div>
+      <div class="table-container" style="max-height: 380px;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Delivery</th>
+              <th>Driver</th>
+              <th>Status</th>
+              <th>Time</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody id="chaos-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <script>
+    let activeOtpDeliveryId = null;
+    let expectedDemoOtp = null;
+    let lastNextSuggestion = null;
+
+    // Toast utility
+    function showToast(message, type = 'info') {
+      const c = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.textContent = message;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        setTimeout(() => t.remove(), 300);
+      }, 4000);
+    }
+
+    // Tabs
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.toLowerCase().includes(tabId));
+      if (activeBtn) activeBtn.classList.add('active');
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+    }
+
+    // Modals
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    // Fetch Stats
+    async function fetchStats() {
+      try {
+        const res = await fetch('/stats');
+        const d = await res.json();
+        document.getElementById('stat-avail-v').textContent = d.available_vehicles;
+        document.getElementById('stat-avail-dr').textContent = d.available_drivers;
+        document.getElementById('stat-active-del').textContent = d.active_deliveries;
+        document.getElementById('stat-deliv-cnt').textContent = d.delivered_count;
+        document.getElementById('stat-pend-cnt').textContent = d.pending_count;
+        document.getElementById('stat-util-pct').textContent = `${d.fleet_utilisation_pct}%`;
+        document.getElementById('util-fill').style.width = `${Math.min(100, d.fleet_utilisation_pct)}%`;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Fetch Vehicles
+    async function fetchVehicles() {
+      try {
+        const res = await fetch('/vehicles');
+        const vehicles = await res.json();
+        document.getElementById('count-veh').textContent = vehicles.length;
+        const tbody = document.getElementById('vehicles-tbody');
+        tbody.innerHTML = vehicles.map(v => `
+          <tr>
+            <td><strong>${v.vehicle_id}</strong></td>
+            <td>${v.registration_no}</td>
+            <td>${v.type}</td>
+            <td>${v.capacity} kg</td>
+            <td><span class="badge badge-${v.status}">${v.status}</span></td>
+            <td>${v.service_due_date}</td>
+            <td>${v.active_delivery_id ? `<a href="javascript:void(0)" onclick="openAudit('${v.active_delivery_id}')">${v.active_delivery_id}</a>` : '<span style="color:var(--text-muted)">None</span>'}</td>
+            <td>
+              <div class="action-group">
+                ${v.active_delivery_id ? `<button class="action-btn btn-danger" onclick="triggerBreakdown('${v.vehicle_id}')">⚠️ Breakdown Swap</button>` : ''}
+                ${v.status === 'maintenance' ? `<button class="action-btn btn-success" onclick="setVehicleStatus('${v.vehicle_id}', 'available')">Mark Available</button>` : ''}
+                ${v.status === 'available' ? `<button class="action-btn btn-outline" onclick="setVehicleStatus('${v.vehicle_id}', 'maintenance')">Set Maintenance</button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Fetch Drivers
+    async function fetchDrivers() {
+      try {
+        const res = await fetch('/drivers');
+        const drivers = await res.json();
+        document.getElementById('count-dr').textContent = drivers.length;
+        const tbody = document.getElementById('drivers-tbody');
+        tbody.innerHTML = drivers.map(dr => `
+          <tr>
+            <td><strong>${dr.driver_id}</strong></td>
+            <td>${dr.name}</td>
+            <td>${dr.phone}</td>
+            <td><span class="badge badge-${dr.availability_status}">${dr.availability_status}</span></td>
+            <td>${dr.deliveries_this_shift} / ${dr.max_deliveries_per_shift}</td>
+            <td>${dr.active_delivery_id ? `<a href="javascript:void(0)" onclick="openAudit('${dr.active_delivery_id}')">${dr.active_delivery_id}</a>` : '<span style="color:var(--text-muted)">None</span>'}</td>
+            <td>
+              <div class="action-group">
+                ${dr.availability_status === 'available' ? `<button class="action-btn btn-outline" onclick="setDriverStatus('${dr.driver_id}', 'unavailable')">Set Unavailable</button>` : ''}
+                ${dr.availability_status === 'unavailable' ? `<button class="action-btn btn-success" onclick="setDriverStatus('${dr.driver_id}', 'available')">Set Available</button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Fetch Deliveries
+    async function fetchDeliveries() {
+      try {
+        const status = document.getElementById('deliv-status-filter').value;
+        const q = document.getElementById('deliv-search').value;
+        let url = '/deliveries?';
+        if (status) url += `status=${encodeURIComponent(status)}&`;
+        if (q) url += `q=${encodeURIComponent(q)}&`;
+
+        const res = await fetch(url);
+        const deliveries = await res.json();
+        document.getElementById('count-deliv').textContent = deliveries.length;
+        const tbody = document.getElementById('deliveries-tbody');
+        tbody.innerHTML = deliveries.map(d => {
+          let actions = '';
+          if (d.status === 'pending') {
+            actions += `<button class="action-btn btn-primary" onclick="selectForAssign('${d.delivery_id}')">Assign</button>`;
+            actions += `<button class="action-btn btn-danger" onclick="updateDeliveryStatus('${d.delivery_id}', 'cancelled')">Cancel</button>`;
+          } else if (d.status === 'assigned') {
+            actions += `<button class="action-btn btn-purple" onclick="updateDeliveryStatus('${d.delivery_id}', 'in_transit')">Start Trip</button>`;
+            actions += `<button class="action-btn btn-danger" onclick="updateDeliveryStatus('${d.delivery_id}', 'cancelled')">Cancel</button>`;
+          } else if (d.status === 'in_transit') {
+            actions += `<button class="action-btn btn-success" onclick="openOtpModal('${d.delivery_id}', '${d.otp}')">Deliver (OTP)</button>`;
+          }
+          actions += `<button class="action-btn btn-outline" onclick="copyTrackingLink('${d.delivery_id}')" title="Copy tracking link">🔗 Track</button>`;
+
+          return `
+            <tr>
+              <td><a href="javascript:void(0)" onclick="openAudit('${d.delivery_id}')"><strong>${d.delivery_id}</strong></a></td>
+              <td>${d.customer_name}</td>
+              <td style="font-size:0.75rem;"><div>${d.pickup}</div><div style="color:var(--text-muted)">➔ ${d.dropoff}</div></td>
+              <td><span class="badge badge-p-${d.priority}">${d.priority}</span> <span style="font-size:0.75rem; margin-left:0.25rem;">${d.load_kg}kg</span></td>
+              <td><span class="badge badge-${d.status}">${d.status.replace('_', ' ')}</span></td>
+              <td>${d.vehicle_id ? `<div>${d.vehicle_id} (${d.vehicle_type || ''})</div><div style="font-size:0.75rem; color:var(--text-muted);">${d.driver_name || d.driver_id}</div>` : '<span style="color:var(--text-muted)">--</span>'}</td>
+              <td>${d.otp ? `<code style="background:rgba(255,255,255,0.1); padding:0.15rem 0.35rem; border-radius:4px; font-weight:bold;">${d.otp}</code>` : '<span style="color:var(--text-muted)">--</span>'}</td>
+              <td><div class="action-group">${actions}</div></td>
+            </tr>
+          `;
+        }).join('');
+
+        // Populate Assign Panel delivery select
+        const delivSelect = document.getElementById('assign-deliv-select');
+        const curVal = delivSelect.value;
+        const pendingDelivs = deliveries.filter(d => d.status === 'pending');
+        delivSelect.innerHTML = '<option value="">-- Choose Pending Delivery --</option>' + pendingDelivs.map(d => `
+          <option value="${d.delivery_id}" ${d.delivery_id === curVal ? 'selected' : ''}>${d.delivery_id} (${d.priority.toUpperCase()} - ${d.load_kg}kg - ${d.customer_name})</option>
+        `).join('');
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Fetch Priority Queue
+    async function fetchQueue() {
+      try {
+        const res = await fetch('/queue');
+        const queue = await res.json();
+        document.getElementById('count-queue').textContent = queue.length;
+        const tbody = document.getElementById('queue-tbody');
+        tbody.innerHTML = queue.map(item => {
+          const d = item.delivery;
+          const v = item.suggested_vehicle;
+          const dr = item.suggested_driver;
+          return `
+            <tr>
+              <td><span class="badge badge-p-${d.priority}">${d.priority}</span></td>
+              <td><a href="javascript:void(0)" onclick="openAudit('${d.delivery_id}')"><strong>${d.delivery_id}</strong></a></td>
+              <td style="font-size:0.8rem;">${d.scheduled_time}</td>
+              <td><div>${d.customer_name}</div><div style="font-size:0.75rem; color:var(--text-muted);">${d.pickup} ➔ ${d.dropoff}</div></td>
+              <td><strong>${d.load_kg} kg</strong></td>
+              <td>${v ? `<div>${v.vehicle_id} (${v.type})</div><div style="font-size:0.75rem; color:var(--text-muted);">${v.capacity}kg cap</div>` : '<span style="color:var(--danger)">No vehicle</span>'}</td>
+              <td>${dr ? `<div>${dr.name}</div><div style="font-size:0.75rem; color:var(--text-muted);">${dr.deliveries_this_shift}/${dr.max_deliveries_per_shift} shift</div>` : '<span style="color:var(--danger)">No driver</span>'}</td>
+              <td>
+                ${item.eligible ? `<button class="action-btn btn-primary" onclick="quickAssign('${d.delivery_id}', '${v.vehicle_id}', '${dr.driver_id}')">Accept Match</button>` : `<button class="action-btn btn-outline" onclick="selectForAssign('${d.delivery_id}')">Review</button>`}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Load Eligibility for Assignment Panel ("Why not?" view)
+    async function loadEligibility() {
+      const delivId = document.getElementById('assign-deliv-select').value;
+      const vSelect = document.getElementById('assign-veh-select');
+      const drSelect = document.getElementById('assign-dr-select');
+      const whyBox = document.getElementById('why-box');
+      whyBox.style.display = 'none';
+
+      if (!delivId) {
+        vSelect.innerHTML = '<option value="">-- Select Delivery First --</option>';
+        drSelect.innerHTML = '<option value="">-- Select Delivery First --</option>';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/deliveries/${encodeURIComponent(delivId)}/eligibility`);
+        if (!res.ok) {
+          const err = await res.json();
+          showToast(err.message, 'error');
+          return;
+        }
+
+        const data = await res.json();
+        
+        // Populate Vehicles
+        vSelect.innerHTML = '<option value="">-- Choose Vehicle --</option>' + data.vehicles.map(v => {
+          const label = v.eligible ? `${v.vehicle_id} - ${v.type} (${v.capacity}kg)` : `${v.vehicle_id} [DISABLED: ${v.reason}]`;
+          return `<option value="${v.vehicle_id}" ${!v.eligible ? 'disabled' : ''}>${label}</option>`;
+        }).join('');
+
+        // Populate Drivers
+        drSelect.innerHTML = '<option value="">-- Choose Driver --</option>' + data.drivers.map(dr => {
+          const label = dr.eligible ? `${dr.name} (${dr.deliveries_this_shift}/${dr.max_deliveries_per_shift} shift)` : `${dr.name} [DISABLED: ${dr.reason}]`;
+          return `<option value="${dr.driver_id}" ${!dr.eligible ? 'disabled' : ''}>${label}</option>`;
+        }).join('');
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Pre-fill suggest match
+    async function suggestMatch() {
+      const delivId = document.getElementById('assign-deliv-select').value;
+      if (!delivId) {
+        showToast('Please select a delivery first', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/deliveries/${encodeURIComponent(delivId)}/suggest`);
+        const data = await res.json();
+        const whyBox = document.getElementById('why-box');
+        whyBox.style.display = 'block';
+        whyBox.textContent = data.why;
+
+        if (data.suggested_vehicle) {
+          document.getElementById('assign-veh-select').value = data.suggested_vehicle.vehicle_id;
+        }
+        if (data.suggested_driver) {
+          document.getElementById('assign-dr-select').value = data.suggested_driver.driver_id;
+        }
+        if (data.eligible) {
+          showToast('Optimal resources matched and pre-filled!', 'success');
+        } else {
+          showToast(data.why, 'error');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Execute Assignment with Idempotency Key
+    async function executeAssignment() {
+      const delivId = document.getElementById('assign-deliv-select').value;
+      const vehId = document.getElementById('assign-veh-select').value;
+      const drId = document.getElementById('assign-dr-select').value;
+
+      if (!delivId || !vehId || !drId) {
+        showToast('Please select Delivery, Vehicle and Driver', 'error');
+        return;
+      }
+
+      const idempotencyKey = crypto.randomUUID();
+
+      try {
+        const res = await fetch(`/deliveries/${encodeURIComponent(delivId)}/assign`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey
+          },
+          body: JSON.stringify({ vehicle_id: vehId, driver_id: drId })
+        });
+
+        const data = await res.json();
+        if (res.status === 201) {
+          showToast(`Successfully assigned: Delivery ${delivId} to ${vehId} & ${drId}`, 'success');
+          refreshAll();
+          document.getElementById('why-box').style.display = 'none';
+        } else {
+          showToast(`Assignment Rejected: ${data.message}`, 'error');
+        }
+      } catch (e) {
+        showToast(`Request failed: ${e.message}`, 'error');
+      }
+    }
+
+    async function quickAssign(delivId, vehId, drId) {
+      const idempotencyKey = crypto.randomUUID();
+      try {
+        const res = await fetch(`/deliveries/${encodeURIComponent(delivId)}/assign`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey
+          },
+          body: JSON.stringify({ vehicle_id: vehId, driver_id: drId })
+        });
+        const data = await res.json();
+        if (res.status === 201) {
+          showToast(`Assigned ${delivId} to ${vehId}`, 'success');
+          refreshAll();
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    function selectForAssign(delivId) {
+      document.getElementById('assign-deliv-select').value = delivId;
+      loadEligibility().then(() => suggestMatch());
+    }
+
+    // Status Transitions
+    async function updateDeliveryStatus(delivId, newStatus, otp = null) {
+      try {
+        const payload = { status: newStatus };
+        if (otp) payload.otp = otp;
+
+        const res = await fetch(`/deliveries/${encodeURIComponent(delivId)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          showToast(`Delivery ${delivId} updated to ${newStatus}`, 'success');
+          if (data.next_suggestion) {
+            handleNextSuggestion(data.next_suggestion);
+          }
+          refreshAll();
+        } else {
+          showToast(data.message || 'Status update failed', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    function openOtpModal(delivId, otp) {
+      activeOtpDeliveryId = delivId;
+      expectedDemoOtp = otp;
+      document.getElementById('otp-input').value = '';
+      openModal('otp-modal');
+    }
+
+    function prefillOtp() {
+      if (expectedDemoOtp) {
+        document.getElementById('otp-input').value = expectedDemoOtp;
+      }
+    }
+
+    function submitDeliveryWithOtp() {
+      const otpVal = document.getElementById('otp-input').value;
+      if (!otpVal || otpVal.length < 4) {
+        showToast('Please enter a 4-digit OTP', 'error');
+        return;
+      }
+      closeModal('otp-modal');
+      updateDeliveryStatus(activeOtpDeliveryId, 'delivered', otpVal);
+    }
+
+    // Vehicle breakdown swap
+    async function triggerBreakdown(vehId) {
+      if (!confirm(`Trigger breakdown swap for vehicle ${vehId}?`)) return;
+      try {
+        const res = await fetch(`/vehicles/${encodeURIComponent(vehId)}/breakdown`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message, 'success');
+          if (data.next_suggestion) {
+            handleNextSuggestion(data.next_suggestion);
+          }
+          refreshAll();
+        } else {
+          showToast(data.message || 'Breakdown swap failed', 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    async function setVehicleStatus(vehId, status) {
+      try {
+        const res = await fetch(`/vehicles/${encodeURIComponent(vehId)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(`Vehicle ${vehId} set to ${status}`, 'success');
+          refreshAll();
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    async function setDriverStatus(drId, status) {
+      try {
+        const res = await fetch(`/drivers/${encodeURIComponent(drId)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(`Driver ${drId} set to ${status}`, 'success');
+          refreshAll();
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    // Next in Queue Suggestion Banner
+    function handleNextSuggestion(sugg) {
+      lastNextSuggestion = sugg;
+      const banner = document.getElementById('next-banner');
+      const text = document.getElementById('next-banner-text');
+      const btn = document.getElementById('next-accept-btn');
+
+      if (sugg.eligible && sugg.suggested_vehicle_id && sugg.suggested_driver_id) {
+        text.innerHTML = `Delivery <strong>${sugg.delivery_id}</strong> (${sugg.priority.toUpperCase()} - ${sugg.load_kg}kg) matched with <strong>${sugg.suggested_vehicle_id}</strong> & <strong>${sugg.suggested_driver_id}</strong>`;
+        btn.style.display = 'inline-block';
+      } else {
+        text.innerHTML = `Delivery <strong>${sugg.delivery_id}</strong> is next in queue, but: <em>${sugg.why}</em>`;
+        btn.style.display = 'none';
+      }
+      banner.classList.add('active');
+    }
+
+    function dismissNextBanner() {
+      document.getElementById('next-banner').classList.remove('active');
+    }
+
+    async function acceptNextSuggestion() {
+      if (!lastNextSuggestion) return;
+      dismissNextBanner();
+      await quickAssign(
+        lastNextSuggestion.delivery_id,
+        lastNextSuggestion.suggested_vehicle_id,
+        lastNextSuggestion.suggested_driver_id
+      );
+    }
+
+    // Audit Timeline
+    async function openAudit(delivId) {
+      document.getElementById('audit-delivery-id').textContent = delivId;
+      const timeline = document.getElementById('audit-timeline');
+      timeline.innerHTML = 'Loading events...';
+      openModal('audit-modal');
+
+      try {
+        const res = await fetch(`/deliveries/${encodeURIComponent(delivId)}/audit`);
+        const logs = await res.json();
+        if (!logs.length) {
+          timeline.innerHTML = '<p style="color:var(--text-muted)">No audit entries found for this delivery.</p>';
+          return;
+        }
+        timeline.innerHTML = logs.map(l => `
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-time">${l.ts} &bull; Actor: <strong>${l.actor}</strong></div>
+            <div class="timeline-event">${l.event}</div>
+            <div class="timeline-detail">${l.detail}</div>
+          </div>
+        `).join('');
+      } catch (e) {
+        timeline.innerHTML = `<p style="color:var(--danger)">Error: ${e.message}</p>`;
+      }
+    }
+
+    // Tracking link copy
+    function copyTrackingLink(delivId) {
+      const url = `${window.location.origin}/track.html?id=${encodeURIComponent(delivId)}`;
+      navigator.clipboard.writeText(url).then(() => {
+        showToast(`Copied tracking link for ${delivId}`, 'success');
+      }).catch(() => {
+        prompt('Copy tracking URL:', url);
+      });
+    }
+
+    // Chaos Button: Fires 20 parallel requests contending for the SAME vehicle
+    async function triggerChaos() {
+      const targetVehicle = "V-101";
+      showToast('Launching 20 parallel assign requests for vehicle ' + targetVehicle + '...', 'info');
+
+      // We will generate 20 unique deliveries and drivers or use pending ones
+      const promises = [];
+      const startTime = performance.now();
+
+      for (let i = 1; i <= 20; i++) {
+        const delivId = `D-CHAOS-${i}`;
+        const drId = `DR-CHAOS-${i}`;
+        const idempotencyKey = crypto.randomUUID();
+
+        // Create promise
+        const p = (async () => {
+          const reqStart = performance.now();
+          try {
+            // First ensure delivery exists in DB so we test vehicle concurrency
+            await fetch('/deliveries', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                delivery_id: delivId,
+                pickup: 'Chaos Depot',
+                dropoff: 'Chaos Destination',
+                scheduled_time: '2026-10-30 10:00',
+                priority: 'normal',
+                load_kg: 50,
+                customer_name: `Chaos Tester #${i}`
+              })
+            });
+
+            // Ensure driver exists
+            await fetch('/drivers', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                driver_id: drId,
+                name: `Chaos Driver #${i}`,
+                phone: `+91-90000000${i.toString().padStart(2, '0')}`,
+                availability_status: 'available',
+                max_deliveries_per_shift: 5,
+                deliveries_this_shift: 0
+              })
+            });
+
+            // Send assign request
+            const res = await fetch(`/deliveries/${delivId}/assign`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Idempotency-Key': idempotencyKey
+              },
+              body: JSON.stringify({
+                vehicle_id: targetVehicle,
+                driver_id: drId
+              })
+            });
+
+            const latency = Math.round(performance.now() - reqStart);
+            const data = await res.json();
+            return {
+              reqId: i,
+              deliveryId: delivId,
+              driverId: drId,
+              status: res.status,
+              latency,
+              message: data.message || JSON.stringify(data)
+            };
+          } catch (err) {
+            return {
+              reqId: i,
+              deliveryId: delivId,
+              driverId: drId,
+              status: 'ERR',
+              latency: Math.round(performance.now() - reqStart),
+              message: err.message
+            };
+          }
+        })();
+        promises.push(p);
+      }
+
+      const results = await Promise.all(promises);
+      const successCount = results.filter(r => r.status === 201).length;
+      const rejectCount = results.filter(r => r.status === 409).length;
+
+      document.getElementById('chaos-success-count').textContent = successCount;
+      document.getElementById('chaos-reject-count').textContent = rejectCount;
+
+      const tbody = document.getElementById('chaos-tbody');
+      tbody.innerHTML = results.map(r => `
+        <tr>
+          <td>${r.reqId}</td>
+          <td>${r.deliveryId}</td>
+          <td>${r.driverId}</td>
+          <td><span class="badge ${r.status === 201 ? 'badge-delivered' : 'badge-cancelled'}">${r.status}</span></td>
+          <td>${r.latency}ms</td>
+          <td style="font-size:0.75rem;">${r.message}</td>
+        </tr>
+      `).join('');
+
+      openModal('chaos-modal');
+      refreshAll();
+      showToast(`Chaos complete: ${successCount} succeeded, ${rejectCount} rejected (409)`, successCount === 1 ? 'success' : 'error');
+    }
+
+    // Add Modals
+    function openAddModal(type) {
+      const title = document.getElementById('add-modal-title');
+      const form = document.getElementById('add-modal-form');
+      if (type === 'vehicle') {
+        title.textContent = 'Add New Vehicle';
+        form.innerHTML = `
+          <div class="form-group"><label>Vehicle ID</label><input type="text" id="new-v-id" placeholder="V-201" required></div>
+          <div class="form-group"><label>Registration No</label><input type="text" id="new-v-reg" placeholder="KA-01-AB-9999" required></div>
+          <div class="form-group"><label>Type</label><select id="new-v-type"><option>Van</option><option>Truck</option><option>Bike</option></select></div>
+          <div class="form-group"><label>Capacity (kg)</label><input type="number" id="new-v-cap" placeholder="1000" min="1" required></div>
+          <div class="form-group"><label>Service Due Date</label><input type="date" id="new-v-due" value="2026-12-31" required></div>
+          <button class="btn-primary" style="width:100%; justify-content:center; margin-top:1rem;" onclick="submitNewVehicle()">Create Vehicle</button>
+        `;
+      } else if (type === 'driver') {
+        title.textContent = 'Add New Driver';
+        form.innerHTML = `
+          <div class="form-group"><label>Driver ID</label><input type="text" id="new-dr-id" placeholder="DR-010" required></div>
+          <div class="form-group"><label>Full Name</label><input type="text" id="new-dr-name" placeholder="John Doe" required></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="new-dr-phone" placeholder="+91-9876543200" required></div>
+          <div class="form-group"><label>Max Deliveries / Shift</label><input type="number" id="new-dr-max" value="5" min="1" required></div>
+          <button class="btn-primary" style="width:100%; justify-content:center; margin-top:1rem;" onclick="submitNewDriver()">Create Driver</button>
+        `;
+      } else if (type === 'delivery') {
+        title.textContent = 'Add New Delivery';
+        form.innerHTML = `
+          <div class="form-group"><label>Delivery ID</label><input type="text" id="new-d-id" placeholder="D-301" required></div>
+          <div class="form-group"><label>Customer Name</label><input type="text" id="new-d-cust" placeholder="Acme Logistics" required></div>
+          <div class="form-group"><label>Pickup Location</label><input type="text" id="new-d-pickup" placeholder="Warehouse A" required></div>
+          <div class="form-group"><label>Dropoff Location</label><input type="text" id="new-d-drop" placeholder="Indiranagar 100ft" required></div>
+          <div class="form-group"><label>Scheduled Time</label><input type="text" id="new-d-time" value="2026-10-30 14:00" required></div>
+          <div class="form-group"><label>Priority</label><select id="new-d-prio"><option value="high">High</option><option value="normal" selected>Normal</option><option value="low">Low</option></select></div>
+          <div class="form-group"><label>Load (kg)</label><input type="number" id="new-d-load" placeholder="250" min="1" required></div>
+          <button class="btn-primary" style="width:100%; justify-content:center; margin-top:1rem;" onclick="submitNewDelivery()">Create Delivery</button>
+        `;
+      }
+      openModal('add-modal');
+    }
+
+    async function submitNewVehicle() {
+      const payload = {
+        vehicle_id: document.getElementById('new-v-id').value,
+        registration_no: document.getElementById('new-v-reg').value,
+        type: document.getElementById('new-v-type').value,
+        capacity: parseInt(document.getElementById('new-v-cap').value),
+        status: 'available',
+        service_due_date: document.getElementById('new-v-due').value
+      };
+      const res = await fetch('/vehicles', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+      const d = await res.json();
+      if (res.status === 201) {
+        showToast('Vehicle created', 'success');
+        closeModal('add-modal');
+        refreshAll();
+      } else {
+        showToast(d.message || 'Failed', 'error');
+      }
+    }
+
+    async function submitNewDriver() {
+      const payload = {
+        driver_id: document.getElementById('new-dr-id').value,
+        name: document.getElementById('new-dr-name').value,
+        phone: document.getElementById('new-dr-phone').value,
+        availability_status: 'available',
+        max_deliveries_per_shift: parseInt(document.getElementById('new-dr-max').value),
+        deliveries_this_shift: 0
+      };
+      const res = await fetch('/drivers', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+      const d = await res.json();
+      if (res.status === 201) {
+        showToast('Driver created', 'success');
+        closeModal('add-modal');
+        refreshAll();
+      } else {
+        showToast(d.message || 'Failed', 'error');
+      }
+    }
+
+    async function submitNewDelivery() {
+      const payload = {
+        delivery_id: document.getElementById('new-d-id').value,
+        customer_name: document.getElementById('new-d-cust').value,
+        pickup: document.getElementById('new-d-pickup').value,
+        dropoff: document.getElementById('new-d-drop').value,
+        scheduled_time: document.getElementById('new-d-time').value,
+        priority: document.getElementById('new-d-prio').value,
+        load_kg: parseInt(document.getElementById('new-d-load').value)
+      };
+      const res = await fetch('/deliveries', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+      const d = await res.json();
+      if (res.status === 201) {
+        showToast('Delivery created', 'success');
+        closeModal('add-modal');
+        refreshAll();
+      } else {
+        showToast(d.message || 'Failed', 'error');
+      }
+    }
+
+    // CSV Export & Reset
+    function exportData(type) {
+      window.location.href = `/export/${type}.csv`;
+    }
+
+    async function resetDemoData() {
+      if (!confirm('Reset database to clean seed state?')) return;
+      try {
+        const res = await fetch('/admin/reset', { method: 'POST' });
+        const d = await res.json();
+        showToast(d.message, 'success');
+        refreshAll();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    function refreshAll() {
+      fetchStats();
+      fetchDeliveries();
+      fetchVehicles();
+      fetchDrivers();
+      fetchQueue();
+    }
+
+    // Initial load & 5s auto-refresh
+    refreshAll();
+    setInterval(fetchStats, 5000);
+    setInterval(fetchQueue, 5000);
+  </script>
+</body>
+</html>
